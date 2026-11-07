@@ -1,0 +1,14 @@
+{
+  "name": "lawccheck",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace @lawccheck/web",
+    "dev:mobile": "npm run start --workspace @lawccheck/mobile",
+    "dev:api": "npm run dev --workspace @lawccheck/api"
+  }
+}
