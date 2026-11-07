@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// -------------------------
+// ENUMS
+// -------------------------
+
+enum ChamberRole {
+  OWNER
+  ADMIN
+  LAWYER
+  STAFF
+}
+
+enum ClientType {
+  INDIVIDUAL
+  ORGANIZATION
+}
+
+enum CaseStatus {
+  ACTIVE
+  ON_HOLD
+  CLOSED
+  COMPLETED
+}
+
+// -------------------------
+// USER
+// -------------------------
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  chambersCreated Chamber[]       @relation("ChamberCreator")
+  memberships     ChamberMember[]
+}
+
+// -------------------------
+// CHAMBER
+// -------------------------
+
+model Chamber {
+  id          String   @id @default(uuid())
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User            @relation("ChamberCreator", fields: [createdById], references: [id])
+  members   ChamberMember[]
+  clients   Client[]
+  cases     Case[]
+
+  @@index([createdById])
+}
+
+// -------------------------
+// CHAMBER MEMBERSHIP
+// -------------------------
+
+model ChamberMember {
+  id        String      @id @default(uuid())
+  userId    String
+  chamberId String
+  role      ChamberRole @default(STAFF)
+  isActive  Boolean     @default(true)
+  joinedAt  DateTime    @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chamber Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chamberId])
+  @@index([chamberId, role])
+}
+
+// -------------------------
+// CLIENT
+// -------------------------
+
+model Client {
+  id           String     @id @default(uuid())
+  chamberId    String
+  clientNumber String
+  fullName     String
+  type         ClientType @default(INDIVIDUAL)
+  phone        String?
+  email        String?
+  address      String?
+  notes        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  chamber Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  cases   Case[]
+
+  @@unique([chamberId, clientNumber])
+  @@index([chamberId, fullName])
+}
+
+// -------------------------
+// CASE
+// -------------------------
+
+model Case {
+  id            String     @id @default(uuid())
+  chamberId     String
+  clientId      String
+  caseNumber    String
+  title         String
+  status        CaseStatus @default(ACTIVE)
+  caseType      String?
+  courtName     String?
+  courtLocation String?
+  courtRoom     String?
+  judgeName     String?
+  opposingParty String?
+  filingDate    DateTime?
+  description   String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  chamber Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Restrict)
+
+  @@unique([chamberId, caseNumber])
+  @@index([chamberId, status])
+  @@index([clientId])
+}

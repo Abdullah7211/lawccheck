@@ -1,0 +1,427 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// -------------------------
+// ENUMS
+// -------------------------
+
+enum ChamberRole {
+  OWNER
+  ADMIN
+  LAWYER
+  STAFF
+}
+
+enum ClientType {
+  INDIVIDUAL
+  ORGANIZATION
+}
+
+enum CaseStatus {
+  ACTIVE
+  ON_HOLD
+  CLOSED
+  COMPLETED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  CANCELLED
+}
+
+enum DocumentCategory {
+  PLEADING
+  EVIDENCE
+  AGREEMENT
+  COURT_ORDER
+  CORRESPONDENCE
+  OTHER
+}
+
+enum ExpenseCategory {
+  OFFICE
+  TRAVEL
+  COURT_FEES
+  STAFF_SALARY
+  UTILITIES
+  OTHER
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  MOBILE_BANKING
+  CARD
+  CHEQUE
+  OTHER
+}
+
+enum NotificationType {
+  GENERAL
+  TASK
+  HEARING
+  DEADLINE
+  PAYMENT
+  CASE_UPDATE
+}
+
+// -------------------------
+// USER
+// -------------------------
+
+model User {
+  id                    String         @id @default(uuid())
+  email                 String         @unique
+  name                  String?
+  passwordHash          String?
+  isActive              Boolean        @default(true)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  receivedNotifications Notification[] @relation("NotificationRecipient")
+
+  chambersCreated Chamber[]       @relation("ChamberCreator")
+  memberships     ChamberMember[]
+
+  assignedTasks Task[] @relation("TaskAssignee")
+  createdTasks  Task[] @relation("TaskCreator")
+
+  createdReminders Reminder[] @relation("ReminderCreator")
+  reminders        Reminder[] @relation("ReminderRecipient")
+
+  uploadedDocuments Document[] @relation("DocumentUploader")
+  caseNotes         CaseNote[] @relation("NoteAuthor")
+}
+
+// -------------------------
+// CHAMBER
+// -------------------------
+
+model Chamber {
+  id          String   @id @default(uuid())
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User            @relation("ChamberCreator", fields: [createdById], references: [id])
+  members   ChamberMember[]
+  clients   Client[]
+  cases     Case[]
+
+  hearings      Hearing[]
+  tasks         Task[]
+  reminders     Reminder[]
+  documents     Document[]
+  notes         CaseNote[]
+  expenses      Expense[]
+  payments      Payment[]
+  notifications Notification[]
+
+  @@index([createdById])
+}
+
+// -------------------------
+// CHAMBER MEMBERSHIP
+// -------------------------
+
+model ChamberMember {
+  id        String      @id @default(uuid())
+  userId    String
+  chamberId String
+  role      ChamberRole @default(STAFF)
+  isActive  Boolean     @default(true)
+  joinedAt  DateTime    @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chamber Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, chamberId])
+  @@index([chamberId, role])
+}
+
+// -------------------------
+// CLIENT
+// -------------------------
+
+model Client {
+  id           String     @id @default(uuid())
+  chamberId    String
+  clientNumber String
+  fullName     String
+  type         ClientType @default(INDIVIDUAL)
+  phone        String?
+  email        String?
+  address      String?
+  notes        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  chamber  Chamber   @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  cases    Case[]
+  payments Payment[]
+
+  @@unique([chamberId, clientNumber])
+  @@index([chamberId, fullName])
+}
+
+// -------------------------
+// CASE
+// -------------------------
+
+model Case {
+  id            String     @id @default(uuid())
+  chamberId     String
+  clientId      String
+  caseNumber    String
+  title         String
+  status        CaseStatus @default(ACTIVE)
+  caseType      String?
+  courtName     String?
+  courtLocation String?
+  courtRoom     String?
+  judgeName     String?
+  opposingParty String?
+  filingDate    DateTime?
+  description   String?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  chamber Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Restrict)
+
+  hearings      Hearing[]
+  tasks         Task[]
+  reminders     Reminder[]
+  documents     Document[]
+  notes         CaseNote[]
+  expenses      Expense[]
+  payments      Payment[]
+  notifications Notification[]
+
+  @@unique([chamberId, caseNumber])
+  @@index([chamberId, status])
+  @@index([clientId])
+}
+
+// -------------------------
+// HEARING
+// -------------------------
+
+model Hearing {
+  id          String    @id @default(uuid())
+  chamberId   String
+  caseId      String
+  hearingDate DateTime
+  courtName   String?
+  courtRoom   String?
+  judgeName   String?
+  purpose     String?
+  outcome     String?
+  nextDate    DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  chamber Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  case    Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([chamberId, hearingDate])
+  @@index([caseId, hearingDate])
+}
+
+// -------------------------
+// TASK
+// -------------------------
+
+model Task {
+  id           String       @id @default(uuid())
+  chamberId    String
+  caseId       String?
+  title        String
+  description  String?
+  status       TaskStatus   @default(TODO)
+  priority     TaskPriority @default(MEDIUM)
+  dueDate      DateTime?
+  assignedToId String?
+  createdById  String
+  completedAt  DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  chamber Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  case    Case?   @relation(fields: [caseId], references: [id], onDelete: SetNull)
+
+  assignedTo User? @relation("TaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdBy  User  @relation("TaskCreator", fields: [createdById], references: [id])
+
+  reminders Reminder[]
+
+  @@index([chamberId, status])
+  @@index([chamberId, dueDate])
+  @@index([assignedToId])
+}
+
+// -------------------------
+// REMINDER
+// -------------------------
+
+model Reminder {
+  id          String         @id @default(uuid())
+  chamberId   String
+  caseId      String?
+  taskId      String?
+  recipientId String?
+  title       String
+  message     String?
+  remindAt    DateTime
+  status      ReminderStatus @default(PENDING)
+  createdById String
+  sentAt      DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  chamber Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  case    Case?   @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  task    Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  recipient User? @relation("ReminderRecipient", fields: [recipientId], references: [id], onDelete: SetNull)
+  createdBy User  @relation("ReminderCreator", fields: [createdById], references: [id])
+
+  @@index([chamberId, remindAt, status])
+  @@index([recipientId, status])
+}
+
+// -------------------------
+// DOCUMENT
+// -------------------------
+
+model Document {
+  id           String           @id @default(uuid())
+  chamberId    String
+  caseId       String?
+  title        String
+  fileName     String
+  storageKey   String           @unique
+  mimeType     String
+  fileSize     BigInt
+  category     DocumentCategory @default(OTHER)
+  description  String?
+  uploadedById String
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  chamber    Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  case       Case?   @relation(fields: [caseId], references: [id], onDelete: SetNull)
+  uploadedBy User    @relation("DocumentUploader", fields: [uploadedById], references: [id])
+
+  @@index([chamberId, createdAt])
+  @@index([caseId])
+}
+
+// -------------------------
+// CASE NOTE
+// -------------------------
+
+model CaseNote {
+  id        String   @id @default(uuid())
+  chamberId String
+  caseId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  chamber Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  case    Case    @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  author  User    @relation("NoteAuthor", fields: [authorId], references: [id])
+
+  @@index([chamberId, createdAt])
+  @@index([caseId, createdAt])
+}
+
+model Expense {
+  id          String          @id @default(uuid())
+  chamberId   String
+  caseId      String?
+  title       String
+  description String?
+  amount      Decimal         @db.Decimal(12, 2)
+  currency    String          @default("BDT")
+  category    ExpenseCategory @default(OTHER)
+  expenseDate DateTime        @default(now())
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  chamber Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  case    Case?   @relation(fields: [caseId], references: [id], onDelete: SetNull)
+
+  @@index([chamberId, expenseDate])
+  @@index([caseId])
+}
+
+model Payment {
+  id          String        @id @default(uuid())
+  chamberId   String
+  clientId    String
+  caseId      String?
+  amount      Decimal       @db.Decimal(12, 2)
+  currency    String        @default("BDT")
+  method      PaymentMethod @default(CASH)
+  reference   String?
+  description String?
+  paymentDate DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  chamber Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  client  Client  @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  case    Case?   @relation(fields: [caseId], references: [id], onDelete: SetNull)
+
+  @@index([chamberId, paymentDate])
+  @@index([clientId])
+  @@index([caseId])
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  chamberId   String
+  recipientId String
+  caseId      String?
+  title       String
+  message     String?
+  type        NotificationType @default(GENERAL)
+  isRead      Boolean          @default(false)
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  chamber   Chamber @relation(fields: [chamberId], references: [id], onDelete: Cascade)
+  recipient User    @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  case      Case?   @relation(fields: [caseId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId, isRead, createdAt])
+  @@index([chamberId, createdAt])
+}
