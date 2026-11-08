@@ -7,6 +7,14 @@ import chamberRoutes from "./routes/chambers.js";
 import clientRoutes from "./routes/clients.js";
 import caseRoutes from "./routes/cases.js";
 import hearingRoutes from "./routes/hearings.js";
+import taskRoutes from "./routes/tasks.js";
+import reminderRoutes from "./routes/reminders.js";
+import documentRoutes from "./routes/documents.js";
+import noteRoutes from "./routes/notes.js";
+import expenseRoutes from "./routes/expenses.js";
+import paymentRoutes from "./routes/payments.js";
+import notificationRoutes from "./routes/notifications.js";
+import dashboardRoutes from "./routes/dashboard.js";
 
 const app = express();
 
@@ -54,6 +62,14 @@ app.use("/api/chambers", chamberRoutes);
 app.use("/api/chambers", clientRoutes);
 app.use("/api/chambers", caseRoutes);
 app.use("/api/chambers", hearingRoutes);
+app.use("/api/chambers", taskRoutes);
+app.use("/api/chambers", reminderRoutes);
+app.use("/api/chambers", documentRoutes);
+app.use("/api/chambers", noteRoutes);
+app.use("/api/chambers", expenseRoutes);
+app.use("/api/chambers", paymentRoutes);
+app.use("/api/chambers", notificationRoutes);
+app.use("/api/chambers", dashboardRoutes);
 
 const PORT = process.env.PORT || 5000;
 
