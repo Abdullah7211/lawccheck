@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Private configuration
+.env
+.env.*
+!.env.example
+
+# Uploaded files and legal documents
+backend/media/
+
+# IDE
+.vscode/
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Temporary test files
+backend/downloaded_document.txt
+backend/secure_download_test.txt
+backend/test_document.txt
