@@ -401,10 +401,10 @@ Use this checklist before considering backend testing complete.
 ### Authentication
 - [ ] Registration works.
 - [x] Login works for both test accounts.
-- [ ] JWT refresh works.
-- [ ] Logout works.
-- [ ] Profile retrieval and update work.
-- [ ] Password change works.
+- [x] JWT refresh works.
+- [x] Logout works.
+- [x] Profile retrieval and update work.
+- [x] Password change works.
 - [ ] Phone number change verification works.
 
 ### Resource Management
