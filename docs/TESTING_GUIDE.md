@@ -409,14 +409,14 @@ Use this checklist before considering backend testing complete.
 
 ### Resource Management
 - [x] Client CRUD operations work (create, list, retrieve, update, partial update, search, delete, and lawyer data isolation tested).
-- [ ] Case CRUD operations work.
+- [x] Case CRUD operations work (create, list, retrieve, update, partial update, delete, lawyer data isolation, and cross-lawyer client assignment protection tested).
 - [ ] Hearing CRUD operations work.
 - [ ] Task CRUD operations work.
 - [x] Document upload and download work.
 - [x] Notification listing and retrieval work.
 
 ### Security
-- [ ] Unauthenticated requests are rejected.
+- [x] Unauthenticated requests are rejected (tested for Client and Case APIs).
 - [x] Second Lawyer can access only their own records (tested across all six resource types).
 - [x] Test Lawyer can access only their own records (tested across all six resource types).
 - [x] Cross-lawyer record access is rejected.
