@@ -405,7 +405,7 @@ Use this checklist before considering backend testing complete.
 - [x] Logout works.
 - [x] Profile retrieval and update work.
 - [x] Password change works.
-- [ ] Phone number change verification works.
+- [x] Phone number change verification works.
 
 ### Resource Management
 - [ ] Client CRUD operations work.
