@@ -399,7 +399,7 @@ Verify the following scenarios:
 Use this checklist before considering backend testing complete.
 
 ### Authentication
-- [ ] Registration works.
+- [x] Registration works.
 - [x] Login works for both test accounts.
 - [x] JWT refresh works.
 - [x] Logout works.
