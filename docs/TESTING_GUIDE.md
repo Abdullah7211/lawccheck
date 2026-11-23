@@ -334,6 +334,17 @@ Tests:
 
 Expected result: A lawyer cannot access another lawyer's tasks or associate a task with another lawyer's case.
 
+**Verified results:**
+
+- [x] Task list returns only the authenticated lawyer's tasks.
+- [x] Create, retrieve, PUT, PATCH and DELETE operations work.
+- [x] Unauthenticated requests return HTTP 401.
+- [x] Cross-lawyer task retrieval returns HTTP 404.
+- [x] Creating a task under another lawyer's case returns HTTP 403.
+- [x] Reassigning a task to another lawyer's case returns HTTP 403.
+- [x] Rejected reassignment does not modify the task.
+- [x] Existing task records remain unchanged after testing.
+
 ### 7.4 Documents
 
 Endpoint:
@@ -421,17 +432,18 @@ Use this checklist before considering backend testing complete.
 - [x] Client CRUD operations work (create, list, retrieve, update, partial update, search, delete, and lawyer data isolation tested).
 - [x] Case CRUD operations work (create, list, retrieve, update, partial update, delete, lawyer data isolation, and cross-lawyer client assignment protection tested).
 - [x] Hearing CRUD operations work (create, list, retrieve, PUT, PATCH, delete, lawyer data isolation, and cross-lawyer case assignment protection tested).
-- [ ] Task CRUD operations work.
+- [x] Task CRUD operations work (create, list, retrieve, PUT, PATCH, delete, lawyer data isolation, and cross-lawyer case assignment protection tested).
 - [x] Document upload and download work.
 - [x] Notification listing and retrieval work.
 
 ### Security
-- [x] Unauthenticated requests are rejected (tested for Client and Case APIs).
+- [x] Unauthenticated requests are rejected (tested for Client, Case, Hearing and Task APIs).
 - [x] Second Lawyer can access only their own records (tested across all six resource types).
 - [x] Test Lawyer can access only their own records (tested across all six resource types).
 - [x] Cross-lawyer record access is rejected.
 - [ ] Cross-lawyer update and delete attempts are rejected (hearing case reassignment and notification update isolation tested; cross-lawyer deletion attempts remain untested for other resources).
-- [ ] Tasks and documents cannot be linked to another lawyer's case.
+- [x] Tasks cannot be linked to another lawyer's case.
+- [ ] Documents cannot be linked to another lawyer's case.
 - [x] Hearings cannot be created or reassigned to another lawyer's case.
 - [x] Notification access and update isolation works for both lawyers.
 
