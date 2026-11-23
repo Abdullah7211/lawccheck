@@ -408,7 +408,7 @@ Use this checklist before considering backend testing complete.
 - [x] Phone number change verification works.
 
 ### Resource Management
-- [ ] Client CRUD operations work.
+- [x] Client CRUD operations work (create, list, retrieve, update, partial update, search, delete, and lawyer data isolation tested).
 - [ ] Case CRUD operations work.
 - [ ] Hearing CRUD operations work.
 - [ ] Task CRUD operations work.
