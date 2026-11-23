@@ -366,12 +366,14 @@ Record the results after performing the tests.
 
 | Resource | Second Lawyer | Test Lawyer | Cross-access test |
 |---|---|---|---|
-| Clients | Pending | Pending | Pending |
-| Cases | Pending | Pending | Pending |
-| Hearings | Pending | Pending | Pending |
-| Tasks | Pending | Pending | Pending |
-| Documents | Pending | Pending | Pending |
-| Notifications | Pending | Pending | Pending |
+| Clients | PASS | PASS | PASS |
+| Cases | PASS | PASS | PASS |
+| Hearings | PASS | PASS | PASS |
+| Tasks | PASS | PASS | PASS |
+| Documents | PASS | PASS | PASS |
+| Document Downloads | PASS | PASS | PASS |
+| Notifications | PASS | PASS | PASS |
+| Notification Updates | PASS | PASS | PASS |
 
 Use these result labels:
 
@@ -398,7 +400,7 @@ Use this checklist before considering backend testing complete.
 
 ### Authentication
 - [ ] Registration works.
-- [ ] Login works for both test accounts.
+- [x] Login works for both test accounts.
 - [ ] JWT refresh works.
 - [ ] Logout works.
 - [ ] Profile retrieval and update work.
@@ -410,23 +412,38 @@ Use this checklist before considering backend testing complete.
 - [ ] Case CRUD operations work.
 - [ ] Hearing CRUD operations work.
 - [ ] Task CRUD operations work.
-- [ ] Document upload and download work.
-- [ ] Notification operations work.
+- [x] Document upload and download work.
+- [x] Notification listing and retrieval work.
 
 ### Security
 - [ ] Unauthenticated requests are rejected.
-- [ ] Second Lawyer can access only their own records.
-- [ ] Test Lawyer can access only their own records.
-- [ ] Cross-lawyer record access is rejected.
-- [ ] Cross-lawyer update and delete attempts are rejected.
+- [x] Second Lawyer can access only their own records (tested across all six resource types).
+- [x] Test Lawyer can access only their own records (tested across all six resource types).
+- [x] Cross-lawyer record access is rejected.
+- [ ] Cross-lawyer update and delete attempts are rejected (notification update isolation tested in both directions; other update and delete operations remain untested).
 - [ ] Tasks, hearings and documents cannot be linked to another lawyer's case.
-- [ ] Notification operations affect only the authenticated lawyer's notifications.
+- [x] Notification access and update isolation works for both lawyers.
 
 ### Hearing Reminders
-- [ ] Reminder command executes successfully.
+- [x] Reminder command executes successfully.
 - [ ] Notifications are generated for hearings 7, 3 and 1 days before.
 - [ ] Duplicate reminders are prevented.
-- [ ] Daily Windows Task Scheduler job is configured.
+- [x] Daily Windows Task Scheduler job is configured.
+
+### Multi-Lawyer Data Isolation Test Results
+
+| Resource | Second Lawyer | Test Lawyer | Cross-access |
+|---|---|---|---|
+| Clients | PASS | PASS | PASS |
+| Cases | PASS | PASS | PASS |
+| Hearings | PASS | PASS | PASS |
+| Tasks | PASS | PASS | PASS |
+| Documents | PASS | PASS | PASS |
+| Document Downloads | PASS | PASS | PASS |
+| Notifications | PASS | PASS | PASS |
+| Notification Updates | PASS | PASS | PASS |
+
+**Testing note:** Cross-lawyer access attempts returned HTTP 404 (`Not Found`) in both directions. Unauthorized document downloads and notification updates were also rejected.
 
 ## 10. Testing Notes
 
