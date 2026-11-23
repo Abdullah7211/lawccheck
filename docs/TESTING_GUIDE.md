@@ -293,6 +293,16 @@ Expected result: Each lawyer can access and modify only their own cases.
 
 ### 7.2 Hearings
 
+**Verified results:**
+
+- [x] Hearing list returns only the authenticated lawyer's hearings.
+- [x] Create, retrieve, PUT, PATCH and DELETE operations work.
+- [x] Cross-lawyer hearing retrieval returns HTTP 404.
+- [x] Creating a hearing under another lawyer's case returns HTTP 403.
+- [x] Reassigning a hearing to another lawyer's case returns HTTP 403.
+- [x] Rejected reassignment does not modify the hearing.
+- [x] Existing hearing records remain unchanged after testing.
+
 Endpoint:
 
 ```text
@@ -410,7 +420,7 @@ Use this checklist before considering backend testing complete.
 ### Resource Management
 - [x] Client CRUD operations work (create, list, retrieve, update, partial update, search, delete, and lawyer data isolation tested).
 - [x] Case CRUD operations work (create, list, retrieve, update, partial update, delete, lawyer data isolation, and cross-lawyer client assignment protection tested).
-- [ ] Hearing CRUD operations work.
+- [x] Hearing CRUD operations work (create, list, retrieve, PUT, PATCH, delete, lawyer data isolation, and cross-lawyer case assignment protection tested).
 - [ ] Task CRUD operations work.
 - [x] Document upload and download work.
 - [x] Notification listing and retrieval work.
@@ -420,8 +430,9 @@ Use this checklist before considering backend testing complete.
 - [x] Second Lawyer can access only their own records (tested across all six resource types).
 - [x] Test Lawyer can access only their own records (tested across all six resource types).
 - [x] Cross-lawyer record access is rejected.
-- [ ] Cross-lawyer update and delete attempts are rejected (notification update isolation tested in both directions; other update and delete operations remain untested).
-- [ ] Tasks, hearings and documents cannot be linked to another lawyer's case.
+- [ ] Cross-lawyer update and delete attempts are rejected (hearing case reassignment and notification update isolation tested; cross-lawyer deletion attempts remain untested for other resources).
+- [ ] Tasks and documents cannot be linked to another lawyer's case.
+- [x] Hearings cannot be created or reassigned to another lawyer's case.
 - [x] Notification access and update isolation works for both lawyers.
 
 ### Hearing Reminders
