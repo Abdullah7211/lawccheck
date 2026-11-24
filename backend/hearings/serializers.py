@@ -17,6 +17,7 @@ class HearingSerializer(serializers.ModelSerializer):
             'judge_name',
             'status',
             'outcome',
+            'notes',
             'created_at',
             'updated_at',
         ]

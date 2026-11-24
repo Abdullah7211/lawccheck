@@ -616,6 +616,17 @@ Allowed notification types:
 - `document`
 - `general`
 
+
+### Creating notifications
+
+**POST** `/api/notifications/`
+
+When creating a notification:
+
+- The backend automatically assigns it to the authenticated lawyer. Do not send a `lawyer` field.
+- `is_read` is optional and defaults to `false`.
+- The notification must include `title` and `message`. `notification_type` is optional and defaults to `general`.
+
 ### Filter notifications
 
 Get all notifications:
@@ -625,6 +636,8 @@ Get all notifications:
 Get unread notifications:
 
 `GET /api/notifications/?is_read=false`
+
+The `is_read` query parameter accepts `true` or `false`.
 
 Get read notifications:
 

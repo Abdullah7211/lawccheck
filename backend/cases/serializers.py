@@ -17,6 +17,7 @@ class CaseSerializer(serializers.ModelSerializer):
             'status',
             'filing_date',
             'next_hearing_date',
+            'description',
             'created_at',
             'updated_at',
         ]

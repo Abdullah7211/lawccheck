@@ -14,6 +14,7 @@ class ClientSerializer(serializers.ModelSerializer):
             'phone_number',
             'email',
             'address',
+            'notes',
             'created_at',
             'updated_at',
         ]
