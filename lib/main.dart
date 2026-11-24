@@ -1,6 +1,8 @@
+
 import 'package:material_ui/material_ui.dart';
 
 import 'theme/app_theme.dart';
+import 'theme/app_colors.dart';
 import 'widgets/app_bottom_nav.dart';
 
 import 'screens/home_screen.dart';
@@ -31,7 +33,8 @@ class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+  State<MainNavigationScreen> createState() =>
+      _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
@@ -45,20 +48,35 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     PdfScreen(),
   ];
 
-  @override
+    @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+      backgroundColor: AppColors.background,
+      body: Stack(
+        children: [
+          // Screen content fills everything and scrolls behind the nav.
+          Positioned.fill(
+            child: SafeArea(
+              bottom: false,
+              child: _screens[_currentIndex],
+            ),
+          ),
+
+          // Floating nav. Only the navy container is visible and tappable.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: AppBottomNav(
+              currentIndex: _currentIndex,
+              onTap: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,5 +1,6 @@
 
 import 'package:material_ui/material_ui.dart';
+
 import '../theme/app_colors.dart';
 import 'app_icon.dart';
 
@@ -21,65 +22,93 @@ class AppBottomNav extends StatelessWidget {
     _NavItemData(label: 'PDF', asset: 'assets/icons/pdf.svg'),
   ];
 
+    // Nav height: 6 padding + 53.5 item + 6 padding.
+  static const double _navHeight = 65.5;
+  static const double _bottomGap = 12;
+
+  /// Space that scrollable screens should reserve at the bottom so the
+  /// last item can scroll fully above the floating nav.
+  static double contentBottomSpace(BuildContext context) {
+    return _navHeight +
+        _bottomGap +
+        MediaQuery.of(context).padding.bottom +
+        16;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Container(
-        width: 370,
-        margin: const EdgeInsets.only(bottom: 24),
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Row(
-          children: List.generate(_items.length, (index) {
-            final item = _items[index];
-            final isSelected = currentIndex == index;
+    final double safeBottom = MediaQuery.of(context).padding.bottom;
 
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => onTap(index),
-                child: Container(
-                  height: 53.5,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.navActiveBackground
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AppIcon(
-                        asset: item.asset,
-                        size: 19,
-                        color: isSelected
-                            ? AppColors.navActiveIcon
-                            : AppColors.navInactive,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.label,
-                        maxLines: 1,
-                        style: TextStyle(
-                          fontSize: 11,
-                          height: 1.2,
-                          fontWeight: FontWeight.w500,
-                          color: isSelected
-                              ? AppColors.navActiveIcon
-                              : AppColors.navInactive,
-                        ),
-                      ),
-                    ],
-                  ),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, _bottomGap + safeBottom),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 370),
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x4D0D294E),
+                  blurRadius: 20,
+                  offset: Offset(0, 4),
                 ),
-              ),
-            );
-          }),
+              ],
+            ),
+            child: Row(
+              children: List.generate(_items.length, (index) {
+                final item = _items[index];
+                final isSelected = currentIndex == index;
+
+                return Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => onTap(index),
+                    child: Container(
+                      height: 53.5,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppColors.navActiveBackground
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AppIcon(
+                            asset: item.asset,
+                            size: 19,
+                            color: isSelected
+                                ? AppColors.navActiveIcon
+                                : AppColors.navInactive,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.label,
+                            maxLines: 1,
+                            style: TextStyle(
+                              fontSize: 11,
+                              height: 1.2,
+                              fontWeight: FontWeight.w500,
+                              color: isSelected
+                                  ? AppColors.navActiveIcon
+                                  : AppColors.navInactive,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
         ),
       ),
     );
