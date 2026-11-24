@@ -1,3 +1,4 @@
+
 import 'package:material_ui/material_ui.dart';
 import '../theme/app_colors.dart';
 
@@ -7,6 +8,8 @@ class AppButton extends StatelessWidget {
   final IconData? icon;
   final double height;
   final double? width;
+  final double borderRadius;
+  final EdgeInsetsGeometry padding;
 
   const AppButton({
     super.key,
@@ -15,6 +18,8 @@ class AppButton extends StatelessWidget {
     this.icon,
     this.height = 48,
     this.width,
+    this.borderRadius = 12,
+    this.padding = const EdgeInsets.symmetric(horizontal: 16),
   });
 
   @override
@@ -28,18 +33,27 @@ class AppButton extends StatelessWidget {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.white,
           elevation: 0,
+          padding: padding,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(borderRadius),
           ),
         ),
         child: icon == null
-            ? Text(text)
+            ? Text(
+                text,
+                maxLines: 1,
+                softWrap: false,
+              )
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(icon, size: 18),
                   const SizedBox(width: 8),
-                  Text(text),
+                  Text(
+                    text,
+                    maxLines: 1,
+                    softWrap: false,
+                  ),
                 ],
               ),
       ),
