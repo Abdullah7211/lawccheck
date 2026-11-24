@@ -379,15 +379,24 @@ Endpoint:
 /api/notifications/
 ```
 
-Tests:
+**Tests:**
 
 - Retrieve notifications using both lawyer accounts.
+- Verify unread and read notification filtering.
 - Verify unread notification counts separately.
 - Try accessing another lawyer's notification ID.
-- Try marking another lawyer's notification as read.
+- Try updating another lawyer's notification.
+- Try deleting another lawyer's notification.
 - Verify that `mark_all_read/` affects only the authenticated lawyer's notifications.
+- Verify that unauthenticated requests are rejected.
+- Verify automatic notification generation for hearings 7, 3, and 1 days before.
+- Run the reminder command again to verify duplicate prevention.
 
-Expected result: Notifications must remain isolated between lawyers.
+**Expected result:** Notifications must remain isolated between lawyers. Reminder notifications must be generated at the correct intervals without duplicates.
+
+- [x] Notification listing, retrieval, read/unread filtering, and unread counts work.
+- [x] Notification access, update, and delete isolation works for both lawyers.
+- [x] Notifications are generated for hearings 7, 3 and 1 days before; duplicate prevention tested.
 
 ### 7.6 Test Results Record
 
