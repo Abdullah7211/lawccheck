@@ -361,7 +361,15 @@ Tests:
 - Try updating or deleting another lawyer's document.
 - Try uploading a document linked to another lawyer's case.
 
-Expected result: Only the owning lawyer can access, download, update or delete their documents.
+**Verified results:**
+
+- [x] Document list returns only the authenticated lawyer documents.
+- [x] Upload, retrieve, PUT, PATCH, download and DELETE operations work.
+- [x] Unauthenticated document requests return HTTP 401.
+- [x] Cross-lawyer document retrieval, download and deletion return HTTP 404.
+- [x] Uploading or reassigning a document to another lawyer case returns HTTP 403.
+- [x] Rejected reassignment does not modify the document.
+- [x] Original document records and files remain unchanged after testing.
 
 ### 7.5 Notifications
 
@@ -433,17 +441,17 @@ Use this checklist before considering backend testing complete.
 - [x] Case CRUD operations work (create, list, retrieve, update, partial update, delete, lawyer data isolation, and cross-lawyer client assignment protection tested).
 - [x] Hearing CRUD operations work (create, list, retrieve, PUT, PATCH, delete, lawyer data isolation, and cross-lawyer case assignment protection tested).
 - [x] Task CRUD operations work (create, list, retrieve, PUT, PATCH, delete, lawyer data isolation, and cross-lawyer case assignment protection tested).
-- [x] Document upload and download work.
+- [x] Document CRUD operations work (upload, list, retrieve, PUT, PATCH, delete, download, and lawyer data isolation tested).
 - [x] Notification listing and retrieval work.
 
 ### Security
-- [x] Unauthenticated requests are rejected (tested for Client, Case, Hearing and Task APIs).
+- [x] Unauthenticated requests are rejected (tested for Client, Case, Hearing, Task and Document APIs).
 - [x] Second Lawyer can access only their own records (tested across all six resource types).
 - [x] Test Lawyer can access only their own records (tested across all six resource types).
 - [x] Cross-lawyer record access is rejected.
 - [ ] Cross-lawyer update and delete attempts are rejected (hearing case reassignment and notification update isolation tested; cross-lawyer deletion attempts remain untested for other resources).
 - [x] Tasks cannot be linked to another lawyer's case.
-- [ ] Documents cannot be linked to another lawyer's case.
+- [x] Documents cannot be linked to another lawyer's case.
 - [x] Hearings cannot be created or reassigned to another lawyer's case.
 - [x] Notification access and update isolation works for both lawyers.
 
