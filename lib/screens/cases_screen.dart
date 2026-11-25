@@ -4,6 +4,7 @@ import 'forms/add_case_screen.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_bottom_nav.dart';
+import 'details/case_details_screen.dart';
 
 // --------------------------------------------------
 // DATA
@@ -394,7 +395,17 @@ class _CaseCard extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
-        // TODO: open the case details screen.
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => CaseDetailsScreen(
+              title: item.title,
+              caseNumber: item.caseNumber,
+              client: item.client,
+              statusLabel: item.status.label,
+              statusColor: item.status.color,
+            ),
+          ),
+        );
       },
       child: Container(
         width: double.infinity,

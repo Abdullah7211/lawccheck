@@ -1,10 +1,10 @@
-
 import 'package:material_ui/material_ui.dart';
 
 import 'theme/app_theme.dart';
 import 'theme/app_colors.dart';
 import 'widgets/app_bottom_nav.dart';
 
+import 'screens/splash_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/cases_screen.dart';
 import 'screens/clients_screen.dart';
@@ -24,11 +24,12 @@ class AdvocateNotebookApp extends StatelessWidget {
       title: 'Advocate Notebook',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const MainNavigationScreen(),
+      home: const SplashScreen(),
     );
   }
 }
 
+// Main app navigation: Home, Cases, Clients, Tasks, PDF.
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
 
@@ -48,13 +49,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     PdfScreen(),
   ];
 
-    @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Screen content fills everything and scrolls behind the nav.
+          // Screen content fills the available space.
           Positioned.fill(
             child: SafeArea(
               bottom: false,
@@ -62,7 +63,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
           ),
 
-          // Floating nav. Only the navy container is visible and tappable.
+          // Floating bottom navigation.
           Positioned(
             left: 0,
             right: 0,

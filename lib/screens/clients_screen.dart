@@ -3,10 +3,17 @@ import 'package:material_ui/material_ui.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_bottom_nav.dart';
+import 'edit/edit_client_screen.dart';
+import 'forms/add_client_screen.dart';
+import 'details/client_details_screen.dart';
 
 // --------------------------------------------------
 // DATA
 // --------------------------------------------------
+
+const Color _errorColor = Color(0xFFC0392B);
+
+enum _ClientAction { edit, remove }
 
 class _ClientItem {
   final String name;
@@ -14,12 +21,52 @@ class _ClientItem {
   final String phone;
   final int caseCount;
 
+  // Extra details used by the Edit Client form. Replace with real data from
+  // your repository / provider later.
+  final String email;
+  final String clientType;
+  final String whatsapp;
+  final String address;
+  final String preferredContact;
+  final String notes;
+
   const _ClientItem({
     required this.name,
     required this.clientId,
     required this.phone,
     required this.caseCount,
+    this.email = '',
+    this.clientType = 'Individual',
+    this.whatsapp = '',
+    this.address = '',
+    this.preferredContact = 'Phone',
+    this.notes = '',
   });
+
+  ClientFormData toFormData() => ClientFormData(
+        name: name,
+        phone: phone,
+        email: email,
+        clientType: clientType,
+        whatsapp: whatsapp,
+        address: address,
+        preferredContact: preferredContact,
+        notes: notes,
+      );
+
+  /// Same client (same id / case count) with the edited form values applied.
+  _ClientItem updatedWith(ClientFormData data) => _ClientItem(
+        name: data.name,
+        clientId: clientId,
+        phone: data.phone,
+        caseCount: caseCount,
+        email: data.email,
+        clientType: data.clientType,
+        whatsapp: data.whatsapp,
+        address: data.address,
+        preferredContact: data.preferredContact,
+        notes: data.notes,
+      );
 }
 
 // --------------------------------------------------
@@ -35,20 +82,22 @@ class ClientsScreen extends StatefulWidget {
 
 class _ClientsScreenState extends State<ClientsScreen> {
   // Replace with real data from your repository / provider later.
-  static const List<_ClientItem> _allClients = [
-    _ClientItem(
+  // (Not const anymore so a client can be removed from the list.)
+  final List<_ClientItem> _allClients = [
+    const _ClientItem(
       name: 'Rafiq Rahman',
       clientId: 'CL-001',
       phone: '+880 1711 000111',
       caseCount: 1,
     ),
-    _ClientItem(
+    const _ClientItem(
       name: 'Nusrat Traders Ltd',
       clientId: 'CL-002',
       phone: '+880 1819 222333',
       caseCount: 2,
+      clientType: 'Company',
     ),
-    _ClientItem(
+    const _ClientItem(
       name: 'Sabina Akter',
       clientId: 'CL-003',
       phone: '+880 1915 444555',
@@ -76,6 +125,135 @@ class _ClientsScreenState extends State<ClientsScreen> {
     }).toList();
   }
 
+  // ------------------------------------------------
+  // Actions
+  // ------------------------------------------------
+
+  void _openDetails(_ClientItem client) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ClientDetailsScreen(
+          name: client.name,
+          clientId: client.clientId,
+          phone: client.phone,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _editClient(_ClientItem client) async {
+    final result = await Navigator.of(context).push<ClientFormData>(
+      MaterialPageRoute(
+        builder: (_) => EditClientScreen(
+          clientId: client.clientId,
+          initial: client.toFormData(),
+        ),
+      ),
+    );
+    if (!mounted || result == null) return;
+
+    setState(() {
+      final index = _allClients.indexWhere((c) => c.clientId == client.clientId);
+      if (index != -1) _allClients[index] = client.updatedWith(result);
+    });
+    // TODO: save the updated client to your repository / provider.
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Client updated')),
+    );
+  }
+
+  Future<void> _showClientActions(_ClientItem client) async {
+    FocusScope.of(context).unfocus();
+
+    final action = await showModalBottomSheet<_ClientAction>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => _ClientActionsSheet(clientName: client.name),
+    );
+    if (!mounted || action == null) return;
+
+    switch (action) {
+      case _ClientAction.edit:
+        await _editClient(client);
+      case _ClientAction.remove:
+        await _confirmRemove(client);
+    }
+  }
+
+  Future<void> _confirmRemove(_ClientItem client) async {
+    final casesNote = client.caseCount > 0
+        ? ' This client is linked to ${client.caseCount} '
+            '${client.caseCount == 1 ? 'case' : 'cases'}.'
+        : '';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          'Remove client?',
+          style: TextStyle(
+            color: AppColors.textNavy,
+            fontSize: 17,
+            fontFamily: 'SF Pro',
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.43,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to remove ${client.name}? '
+          "This can't be undone.$casesNote",
+          style: const TextStyle(
+            color: AppColors.textMuted,
+            fontSize: 14,
+            fontFamily: 'SF Pro',
+            fontWeight: FontWeight.w400,
+            height: 1.43,
+            letterSpacing: -0.15,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textMuted),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text(
+              'Remove',
+              style: TextStyle(color: _errorColor),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
+
+    setState(() {
+      _allClients.removeWhere((c) => c.clientId == client.clientId);
+    });
+    // TODO: delete the client in your repository / provider.
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${client.name} removed')),
+    );
+  }
+
+  // ------------------------------------------------
+  // Build
+  // ------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     final clients = _filteredClients;
@@ -95,8 +273,21 @@ class _ClientsScreenState extends State<ClientsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _ClientsHeader(
-                    onAddClient: () {
-                      // TODO: open the Add Client screen.
+                    onAddClient: () async {
+                      final result =
+                          await Navigator.of(context).push<ClientFormData>(
+                        MaterialPageRoute(
+                          builder: (_) => const AddClientScreen(),
+                        ),
+                      );
+
+                      if (!mounted || result == null) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Client form submitted successfully'),
+                        ),
+                      );
                     },
                   ),
                   _SearchField(
@@ -123,7 +314,13 @@ class _ClientsScreenState extends State<ClientsScreen> {
                       itemCount: clients.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
-                        return _ClientCard(item: clients[index]);
+                        final client = clients[index];
+
+                        return _ClientCard(
+                          item: client,
+                          onTap: () => _openDetails(client),
+                          onMenuTap: () => _showClientActions(client),
+                        );
                       },
                     ),
             ),
@@ -261,8 +458,14 @@ class _SearchField extends StatelessWidget {
 
 class _ClientCard extends StatelessWidget {
   final _ClientItem item;
+  final VoidCallback onTap;
+  final VoidCallback onMenuTap;
 
-  const _ClientCard({required this.item});
+  const _ClientCard({
+    required this.item,
+    required this.onTap,
+    required this.onMenuTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -271,12 +474,10 @@ class _ClientCard extends StatelessWidget {
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTap: () {
-        // TODO: open the client details screen.
-      },
+      onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(12, 12, 4, 12),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(12),
@@ -326,6 +527,112 @@ class _ClientCard extends StatelessWidget {
                 fontFamily: 'SF Pro',
                 fontWeight: FontWeight.w400,
                 height: 1.33,
+              ),
+            ),
+            // Three-dot menu (its own tap target, so the card tap isn't fired)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onMenuTap,
+              child: const SizedBox(
+                width: 36,
+                height: 36,
+                child: Icon(
+                  Icons.more_vert_rounded,
+                  size: 20,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// --------------------------------------------------
+// ACTIONS BOTTOM SHEET (Edit / Remove)
+// --------------------------------------------------
+
+class _ClientActionsSheet extends StatelessWidget {
+  final String clientName;
+
+  const _ClientActionsSheet({required this.clientName});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(
+              clientName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textNavy,
+                fontSize: 17,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w600,
+                height: 1.50,
+                letterSpacing: -0.43,
+              ),
+            ),
+          ),
+          _SheetOption(
+            icon: Icons.edit_outlined,
+            label: 'Edit',
+            color: AppColors.textDark,
+            onTap: () => Navigator.of(context).pop(_ClientAction.edit),
+          ),
+          _SheetOption(
+            icon: Icons.delete_outline_rounded,
+            label: 'Remove',
+            color: _errorColor,
+            onTap: () => Navigator.of(context).pop(_ClientAction.remove),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+class _SheetOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _SheetOption({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        height: 52,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 15,
+                fontFamily: 'SF Pro',
+                fontWeight: FontWeight.w400,
+                letterSpacing: -0.23,
               ),
             ),
           ],

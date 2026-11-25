@@ -3,24 +3,36 @@ import 'package:material_ui/material_ui.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_bottom_nav.dart';
+import '../widgets/pdf_actions.dart';
+import 'details/pdf_details_screen.dart';
 
 // --------------------------------------------------
 // DATA
 // --------------------------------------------------
 
 class _PdfItem {
+  final int id;
   final String fileName;
   final String date;
   final List<String> cases;
 
   const _PdfItem({
+    required this.id,
     required this.fileName,
     required this.date,
     required this.cases,
   });
 
-  /// e.g. "19 Oct · Commercial Contract Matter, Property Ownership Dispute"
-  String get subtitle => '$date · ${cases.join(', ')}';
+  _PdfItem copyWith({String? fileName, List<String>? cases}) {
+    return _PdfItem(
+      id: id,
+      fileName: fileName ?? this.fileName,
+      date: date,
+      cases: cases ?? this.cases,
+    );
+  }
+
+  String get subtitle => cases.isEmpty ? date : '$date · ${cases.join(', ')}';
 }
 
 // --------------------------------------------------
@@ -35,23 +47,34 @@ class PdfScreen extends StatefulWidget {
 }
 
 class _PdfScreenState extends State<PdfScreen> {
-  // Replace with real data from your repository / provider later.
-  static const List<_PdfItem> _allPdfs = [
-    _PdfItem(
+  // Demo data. Later, replace this with repository/provider data.
+  final List<_PdfItem> _allPdfs = [
+    const _PdfItem(
+      id: 1,
       fileName: 'Plaint_Rahman_v_Karim.pdf',
       date: '28 Sept',
       cases: ['Rahman vs Karim'],
     ),
-    _PdfItem(
+    const _PdfItem(
+      id: 2,
       fileName: 'Title_Deed_Plot42.pdf',
       date: '13 Oct',
       cases: ['Property Ownership Dispute'],
     ),
-    _PdfItem(
+    const _PdfItem(
+      id: 3,
       fileName: 'Supply_Agreement.pdf',
       date: '19 Oct',
       cases: ['Commercial Contract Matter', 'Property Ownership Dispute'],
     ),
+  ];
+
+  // Available cases for linking documents.
+  final List<String> _availableCases = [
+    'Rahman vs Karim',
+    'Property Ownership Dispute',
+    'Commercial Contract Matter',
+    'Akter Family Settlement',
   ];
 
   final TextEditingController _searchController = TextEditingController();
@@ -64,6 +87,10 @@ class _PdfScreenState extends State<PdfScreen> {
     super.dispose();
   }
 
+  // ------------------------------------------------
+  // SEARCH
+  // ------------------------------------------------
+
   List<_PdfItem> get _filteredPdfs {
     final query = _query.trim().toLowerCase();
 
@@ -73,6 +100,128 @@ class _PdfScreenState extends State<PdfScreen> {
         .where((item) => item.fileName.toLowerCase().contains(query))
         .toList();
   }
+
+  // ------------------------------------------------
+  // HELPERS (always look items up by id, so they keep
+  // working after a rename / case change)
+  // ------------------------------------------------
+
+  List<String> _otherFileNames(int id) {
+    return _allPdfs.where((p) => p.id != id).map((p) => p.fileName).toList();
+  }
+
+  void _applyRename(int id, String newName) {
+    if (!mounted) return;
+    final index = _allPdfs.indexWhere((p) => p.id == id);
+    if (index == -1) return;
+
+    setState(() {
+      _allPdfs[index] = _allPdfs[index].copyWith(fileName: newName);
+    });
+  }
+
+  void _applyCases(int id, List<String> cases) {
+    if (!mounted) return;
+    final index = _allPdfs.indexWhere((p) => p.id == id);
+    if (index == -1) return;
+
+    setState(() {
+      _allPdfs[index] = _allPdfs[index].copyWith(cases: List<String>.of(cases));
+    });
+  }
+
+  void _applyRemove(int id) {
+    if (!mounted) return;
+    setState(() => _allPdfs.removeWhere((p) => p.id == id));
+  }
+
+  void _showMessage(String text) {
+    ScaffoldMessenger.maybeOf(context)
+      ?..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  // ------------------------------------------------
+  // CARD ACTIONS
+  // ------------------------------------------------
+
+  Future<void> _rename(_PdfItem item) async {
+    final newName = await showRenamePdfDialog(
+      context,
+      currentName: item.fileName,
+      otherFileNames: _otherFileNames(item.id),
+    );
+
+    if (newName != null && newName != item.fileName) {
+      _applyRename(item.id, newName);
+    }
+  }
+
+  Future<void> _linkCases(_PdfItem item) async {
+    final result = await showLinkCasesSheet(
+      context,
+      availableCases: _availableCases,
+      selected: item.cases,
+    );
+
+    if (result != null) _applyCases(item.id, result);
+  }
+
+  Future<void> _remove(_PdfItem item) async {
+    final confirmed = await showRemovePdfDialog(
+      context,
+      fileName: item.fileName,
+    );
+
+    if (confirmed) _applyRemove(item.id);
+  }
+
+  void _download(_PdfItem item) {
+    // TODO: Implement PDF download.
+    _showMessage('Downloading ${item.fileName}…');
+  }
+
+  void _onMenuAction(_PdfItem item, PdfMenuAction action) {
+    switch (action) {
+      case PdfMenuAction.open:
+        _openPdfDetails(item);
+      case PdfMenuAction.download:
+        _download(item);
+      case PdfMenuAction.rename:
+        _rename(item);
+      case PdfMenuAction.linkCases:
+        _linkCases(item);
+      case PdfMenuAction.remove:
+        _remove(item);
+    }
+  }
+
+  // ------------------------------------------------
+  // OPEN PDF DETAILS
+  // ------------------------------------------------
+
+  Future<void> _openPdfDetails(_PdfItem item) async {
+    final id = item.id;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PdfDetailsScreen(
+          fileName: item.fileName,
+          date: item.date,
+          linkedCases: List<String>.of(item.cases),
+          availableCases: _availableCases,
+          otherFileNames: _otherFileNames(id),
+          onRenamed: (newName) => _applyRename(id, newName),
+          onLinkedCasesChanged: (cases) => _applyCases(id, cases),
+          onRemoved: () => _applyRemove(id),
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------
+  // BUILD
+  // ------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +235,7 @@ class _PdfScreenState extends State<PdfScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Fixed top area: title + upload button, search
+            // Header and search.
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -94,18 +243,20 @@ class _PdfScreenState extends State<PdfScreen> {
                 children: [
                   _PdfHeader(
                     onUpload: () {
-                      // TODO: open the file picker / upload flow.
+                      // TODO: Open the file picker / upload flow.
                     },
                   ),
                   _SearchField(
                     controller: _searchController,
-                    onChanged: (value) => setState(() => _query = value),
+                    onChanged: (value) {
+                      setState(() => _query = value);
+                    },
                   ),
                 ],
               ),
             ),
 
-            // Scrollable list
+            // PDF list.
             Expanded(
               child: pdfs.isEmpty
                   ? const _EmptyState()
@@ -125,12 +276,8 @@ class _PdfScreenState extends State<PdfScreen> {
 
                         return _PdfCard(
                           item: item,
-                          onOpen: () {
-                            // TODO: open the PDF viewer.
-                          },
-                          onDownload: () {
-                            // TODO: download the PDF.
-                          },
+                          onOpen: () => _openPdfDetails(item),
+                          onMenuAction: (action) => _onMenuAction(item, action),
                         );
                       },
                     ),
@@ -184,7 +331,7 @@ class _PdfHeader extends StatelessWidget {
 }
 
 // --------------------------------------------------
-// SEARCH (same as Cases screen, different hint)
+// SEARCH
 // --------------------------------------------------
 
 class _SearchField extends StatelessWidget {
@@ -270,121 +417,76 @@ class _SearchField extends StatelessWidget {
 class _PdfCard extends StatelessWidget {
   final _PdfItem item;
   final VoidCallback onOpen;
-  final VoidCallback onDownload;
+  final ValueChanged<PdfMenuAction> onMenuAction;
 
   const _PdfCard({
     required this.item,
     required this.onOpen,
-    required this.onDownload,
+    required this.onMenuAction,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(width: 1, color: AppColors.border),
+    final radius = BorderRadius.circular(12);
+
+    return Material(
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: BorderSide(width: 1, color: AppColors.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // File name + trailing icon
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+      child: InkWell(
+        borderRadius: radius,
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  item.fileName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.textDark,
-                    fontSize: 16,
-                    fontFamily: 'SF Pro',
-                    fontWeight: FontWeight.w500,
-                    height: 1.50,
-                    letterSpacing: -0.31,
+              // File name and 3-dot menu.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.fileName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.textDark,
+                        fontSize: 16,
+                        fontFamily: 'SF Pro',
+                        fontWeight: FontWeight.w500,
+                        height: 1.50,
+                        letterSpacing: -0.31,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 4),
+                  SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: PdfActionsMenu(
+                      fileName: item.fileName,
+                      subtitle: item.subtitle,
+                      onSelected: onMenuAction,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              // The Figma export had an empty 24x24 icon slot here.
-              // Swap the icon for whatever you use in the design.
-              const Icon(
-                Icons.picture_as_pdf_rounded,
-                size: 24,
-                color: AppColors.textMuted,
+
+              // Date and linked cases.
+              Text(
+                item.subtitle,
+                style: const TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 12,
+                  fontFamily: 'SF Pro',
+                  fontWeight: FontWeight.w400,
+                  height: 1.33,
+                ),
               ),
             ],
-          ),
-
-          // Date + linked case(s)
-          Text(
-            item.subtitle,
-            style: const TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 12,
-              fontFamily: 'SF Pro',
-              fontWeight: FontWeight.w400,
-              height: 1.33,
-            ),
-          ),
-
-          // Actions
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _OutlinedActionButton(label: 'Open', onTap: onOpen),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _OutlinedActionButton(
-                    label: 'Download',
-                    onTap: onDownload,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OutlinedActionButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-
-  const _OutlinedActionButton({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        height: 36,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(width: 1, color: AppColors.border),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppColors.textNavy,
-            fontSize: 14,
-            fontFamily: 'SF Pro',
-            fontWeight: FontWeight.w400,
-            height: 1.43,
-            letterSpacing: -0.15,
           ),
         ),
       ),
