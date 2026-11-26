@@ -111,7 +111,10 @@ class _HomeHeader extends StatelessWidget {
           ),
           const _HeaderIcon(icon: Icons.notifications_none_rounded),
           const _HeaderIcon(icon: Icons.search_rounded),
-          const _HeaderIcon(icon: Icons.more_horiz_rounded),
+          _HeaderIcon(
+            icon: Icons.menu_rounded, // 3 bars instead of 3 dots
+            onTap: () => Scaffold.of(context).openDrawer(),
+          ),
         ],
       ),
     );
@@ -120,23 +123,27 @@ class _HomeHeader extends StatelessWidget {
 
 class _HeaderIcon extends StatelessWidget {
   final IconData icon;
+  final VoidCallback? onTap;
 
-  const _HeaderIcon({required this.icon});
+  const _HeaderIcon({required this.icon, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 44,
-      height: 44,
-      child: Icon(
-        icon,
-        size: 22,
-        color: const Color(0xFF0D294E),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: SizedBox(
+        width: 44,
+        height: 44,
+        child: Icon(
+          icon,
+          size: 22,
+          color: const Color(0xFF0D294E),
+        ),
       ),
     );
   }
 }
-
 // --------------------------------------------------
 // NEXT HEARING CARD
 // --------------------------------------------------

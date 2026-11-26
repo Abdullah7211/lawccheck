@@ -5,6 +5,7 @@ import '../widgets/app_button.dart';
 import '../widgets/app_bottom_nav.dart';
 import 'forms/add_task_screen.dart';
 import 'edit/edit_task_screen.dart';
+import '../widgets/app_snackbar.dart';
 
 // --------------------------------------------------
 // DATA
@@ -188,11 +189,7 @@ class _TasksScreenState extends State<TasksScreen> {
     return tasks.where((task) => task.status == status).toList();
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
+  void _showMessage(String message) => showAppSnackBar(context, message);
 
   // ------------------------------------------------
   // Actions

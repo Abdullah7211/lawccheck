@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../theme/app_colors.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_bottom_nav.dart';
+import '../widgets/app_snackbar.dart';
 import 'edit/edit_client_screen.dart';
 import 'forms/add_client_screen.dart';
 import 'details/client_details_screen.dart';
@@ -43,6 +44,22 @@ class _ClientItem {
     this.notes = '',
   });
 
+  /// A brand new client from the Add Client form (no cases yet).
+  factory _ClientItem.fromFormData(String clientId, ClientFormData data) {
+    return _ClientItem(
+      name: data.name,
+      clientId: clientId,
+      phone: data.phone,
+      caseCount: 0,
+      email: data.email,
+      clientType: data.clientType,
+      whatsapp: data.whatsapp,
+      address: data.address,
+      preferredContact: data.preferredContact,
+      notes: data.notes,
+    );
+  }
+
   ClientFormData toFormData() => ClientFormData(
         name: name,
         phone: phone,
@@ -82,7 +99,7 @@ class ClientsScreen extends StatefulWidget {
 
 class _ClientsScreenState extends State<ClientsScreen> {
   // Replace with real data from your repository / provider later.
-  // (Not const anymore so a client can be removed from the list.)
+  // (Not const anymore so a client can be added / removed.)
   final List<_ClientItem> _allClients = [
     const _ClientItem(
       name: 'Rafiq Rahman',
@@ -125,6 +142,17 @@ class _ClientsScreenState extends State<ClientsScreen> {
     }).toList();
   }
 
+  /// Next free id like CL-004 (based on the highest existing number, so ids
+  /// are never reused after a client is removed).
+  String _nextClientId() {
+    int highest = 0;
+    for (final client in _allClients) {
+      final number = int.tryParse(client.clientId.replaceAll('CL-', ''));
+      if (number != null && number > highest) highest = number;
+    }
+    return 'CL-${(highest + 1).toString().padLeft(3, '0')}';
+  }
+
   // ------------------------------------------------
   // Actions
   // ------------------------------------------------
@@ -139,6 +167,20 @@ class _ClientsScreenState extends State<ClientsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _addClient() async {
+    final result = await Navigator.of(context).push<ClientFormData>(
+      MaterialPageRoute(builder: (_) => const AddClientScreen()),
+    );
+    if (!mounted || result == null) return;
+
+    setState(() {
+      _allClients.insert(0, _ClientItem.fromFormData(_nextClientId(), result));
+    });
+    // TODO: create the client in your repository / provider.
+
+    showAppSnackBar(context, 'Client added');
   }
 
   Future<void> _editClient(_ClientItem client) async {
@@ -158,9 +200,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
     });
     // TODO: save the updated client to your repository / provider.
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Client updated')),
-    );
+    showAppSnackBar(context, 'Client updated');
   }
 
   Future<void> _showClientActions(_ClientItem client) async {
@@ -245,9 +285,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
     });
     // TODO: delete the client in your repository / provider.
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${client.name} removed')),
-    );
+    showAppSnackBar(context, '${client.name} removed');
   }
 
   // ------------------------------------------------
@@ -272,24 +310,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ClientsHeader(
-                    onAddClient: () async {
-                      final result =
-                          await Navigator.of(context).push<ClientFormData>(
-                        MaterialPageRoute(
-                          builder: (_) => const AddClientScreen(),
-                        ),
-                      );
-
-                      if (!mounted || result == null) return;
-
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Client form submitted successfully'),
-                        ),
-                      );
-                    },
-                  ),
+                  _ClientsHeader(onAddClient: _addClient),
                   _SearchField(
                     controller: _searchController,
                     onChanged: (value) => setState(() => _query = value),
